@@ -479,6 +479,11 @@ app.post('/api/tables/:id/checkin', (req, res) => {
     try {
         const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
         if (!table) return res.status(404).json({ error: 'Table not found' });
+
+        if (table.status === 'occupied') {
+            return res.status(400).json({ error: 'Table is already occupied' });
+        }
+
         db.prepare(`UPDATE tables SET status = 'occupied' WHERE id = ?`).run(req.params.id);
         const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
         io.emit('table-updated', updated);

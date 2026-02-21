@@ -791,14 +791,52 @@ select.input {
 }
 
 .table-btn.occupied {
-  opacity: 0.4;
+  opacity: 0.7;
   pointer-events: none;
+  background: var(--bg-dark-2);
+  border-color: var(--border-dark);
+  color: var(--text-muted);
 }
 
-.table-btn.occupied::after {
-  content: 'Occupied';
-  font-size: 9px;
+.occupied-badge {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--danger-bg);
   color: var(--danger);
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+.table-number {
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.table-btn .capacity {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.table-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--accent-glow);
+  color: var(--accent);
+}
+
+.table-btn.selected .table-number {
+  color: var(--accent);
 }
 
 /* ===== PREMIUM MENU PAGE ===== */

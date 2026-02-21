@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { UtensilsCrossed } from 'lucide-react';
+import { UtensilsCrossed, Users } from 'lucide-react';
 import { api } from '../../utils/api';
 import { useCart } from '../../context/CartContext';
+import { useSocket } from '../../context/SocketContext';
 import toast from 'react-hot-toast';
 
 export default function TableSelect() {
@@ -12,31 +13,70 @@ export default function TableSelect() {
     const navigate = useNavigate();
     const { tableNumber } = useParams();
     const { setTable } = useCart();
+    const { socket } = useSocket();
 
-    useEffect(() => {
+    const fetchTables = () => {
         api.getTables().then(data => {
             setTables(data);
             if (tableNumber) {
                 const t = data.find(t => t.table_number === parseInt(tableNumber));
                 if (t) {
-                    setSelected(t);
-                    setTable(t.id, t.table_number);
-                    // Mark table as occupied in backend
-                    api.checkinTable(t.id).catch(() => { });
-                    navigate('/menu');
+                    if (t.status === 'occupied') {
+                        toast.error(`Table ${t.table_number} is already occupied.`);
+                        navigate('/', { replace: true }); // Redirect to home/selection
+                    } else {
+                        setSelected(t);
+                        handleAutoCheckin(t);
+                    }
                 }
             }
             setLoading(false);
         }).catch(() => setLoading(false));
-    }, [tableNumber]);
+    };
 
-    const handleStart = () => {
+    const handleAutoCheckin = async (table) => {
+        try {
+            setTable(table.id, table.table_number);
+            await api.checkinTable(table.id);
+            navigate('/menu');
+        } catch (err) {
+            toast.error(err.message || 'Failed to select table');
+            setSelected(null);
+        }
+    };
+
+    useEffect(() => {
+        fetchTables();
+        
+        if (socket) {
+            socket.on('table-updated', (updatedTable) => {
+                setTables(prev => prev.map(t => t.id === updatedTable.id ? updatedTable : t));
+                if (selected?.id === updatedTable.id && updatedTable.status === 'occupied') {
+                   // If our selected table becomes occupied by someone else
+                   // We don't do anything yet, maybe show a warning on 'Start'
+                }
+            });
+        }
+
+        return () => {
+            if (socket) socket.off('table-updated');
+        };
+    }, [tableNumber, socket]);
+
+    const handleStart = async () => {
         if (!selected) return toast.error('Please select a table');
-        setTable(selected.id, selected.table_number);
-        // Mark table as occupied in backend
-        api.checkinTable(selected.id).catch(() => { });
-        toast.success(`Table ${selected.table_number} selected!`);
-        navigate('/menu');
+        if (selected.status === 'occupied') return toast.error('Table is already occupied');
+        
+        try {
+            setTable(selected.id, selected.table_number);
+            await api.checkinTable(selected.id);
+            toast.success(`Table ${selected.table_number} selected!`);
+            navigate('/menu');
+        } catch (err) {
+            toast.error(err.message || 'Failed to select table');
+            // Refresh tables to get latest status
+            fetchTables();
+        }
     };
 
     if (loading) return (
@@ -54,20 +94,25 @@ export default function TableSelect() {
             <p className="subtitle">Select your table to start ordering</p>
 
             <div className="table-grid">
-                {tables.map((table, i) => (
-                    <button
-                        key={table.id}
-                        className={`table-btn ${selected?.id === table.id ? 'selected' : ''} ${table.status === 'occupied' && !selected ? '' : ''}`}
-                        style={{ '--i': i }}
-                        onClick={() => setSelected(table)}
-                    >
-                        {table.table_number}
-                        <span>{table.capacity} seats</span>
-                    </button>
-                ))}
+                {tables.map((table, i) => {
+                    const isOccupied = table.status === 'occupied';
+                    return (
+                        <button
+                            key={table.id}
+                            className={`table-btn ${selected?.id === table.id ? 'selected' : ''} ${isOccupied ? 'occupied' : ''}`}
+                            style={{ '--i': i }}
+                            onClick={() => !isOccupied && setSelected(table)}
+                            disabled={isOccupied}
+                        >
+                            {isOccupied && <div className="occupied-badge"><Users size={12} /> OCCUPIED</div>}
+                            <div className="table-number">{table.table_number}</div>
+                            <span className="capacity">{table.capacity} seats</span>
+                        </button>
+                    );
+                })}
             </div>
 
-            <button className="btn btn-primary btn-lg w-full" style={{ maxWidth: 340 }} onClick={handleStart} disabled={!selected}>
+            <button className="btn btn-primary btn-lg w-full" style={{ maxWidth: 340 }} onClick={handleStart} disabled={!selected || selected.status === 'occupied'}>
                 <UtensilsCrossed size={20} />
                 {selected ? `Start Ordering — Table ${selected.table_number}` : 'Select a Table'}
             </button>
