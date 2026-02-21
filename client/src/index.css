@@ -647,7 +647,7 @@ select.input {
   position: relative;
 }
 
-@media (min-width: 481px) {
+@media (min-width: 481px) and (max-width: 639px) {
   .customer-app {
     border-left: 1px solid var(--border-dark);
     border-right: 1px solid var(--border-dark);
@@ -3038,6 +3038,210 @@ select.input {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Customer App Tablet & Desktop Responsiveness --- */
+@media (min-width: 640px) {
+  .customer-app {
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+    border: none;
+    box-shadow: none;
+  }
+
+  /* Menu sticky header full width */
+  .menu-sticky-header {
+    max-width: 100%;
+  }
+
+  /* Menu body with more padding */
+  .menu-body {
+    padding: 28px 32px 120px;
+  }
+
+  /* 2-column menu grid */
+  .menu-items-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .menu-item-card {
+    border: 1px solid #F3F4F6;
+    border-radius: var(--radius-lg) !important;
+    border-bottom: 1px solid #F3F4F6 !important;
+  }
+
+  .menu-item-info {
+    justify-content: space-between;
+  }
+
+  .menu-item-img {
+    width: 130px;
+    height: 130px;
+  }
+
+  .menu-item-name {
+    font-size: 16px;
+  }
+
+  .menu-item-desc {
+    font-size: 13px;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  /* Categories scroll with more spacing */
+  .menu-categories-wrap {
+    padding: 8px 32px 12px;
+    gap: 10px;
+  }
+
+  .menu-cat-pill {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+
+  /* Topbar spacing */
+  .menu-topbar {
+    padding: 16px 32px;
+  }
+
+  .menu-filter-strip {
+    padding: 8px 32px 14px;
+  }
+
+  .menu-search-wrap {
+    padding: 0 32px;
+  }
+
+  .menu-search-wrap.open {
+    padding: 0 32px 12px;
+  }
+
+  /* Item Detail Responsive */
+  .detail-hero {
+    height: 450px;
+  }
+
+  .detail-page .detail-content-card {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 36px 40px 0;
+  }
+
+  /* Table Select - larger grid */
+  .table-select-page .logo {
+    font-size: 52px;
+  }
+
+  .table-grid {
+    max-width: 520px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .table-btn {
+    font-size: 22px;
+    border-radius: var(--radius-xl);
+  }
+
+  /* Cart page centered & better spacing */
+  .cart-page {
+    padding-bottom: 100px;
+  }
+
+  .cart-page>.cart-header,
+  .cart-page>.flex {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .cart-page>div {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Bill page centered */
+  .bill-page {
+    padding: 32px;
+  }
+
+  .bill-page>div {
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Order tracking centered */
+  .order-tracking-page {
+    padding: 32px;
+  }
+
+  .order-tracking-page>* {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Floating cart bar centered */
+  .floating-cart {
+    max-width: 560px;
+    border-radius: var(--radius-full);
+    bottom: 24px;
+  }
+
+  /* Waiter FAB */
+  .call-waiter-fab {
+    right: 32px;
+  }
+
+  /* Order banner */
+  .menu-order-banner {
+    padding: 14px 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .customer-app {
+    max-width: 1100px;
+    margin: 0 auto;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.08);
+  }
+
+  .menu-items-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .menu-body {
+    padding: 32px 48px 120px;
+  }
+
+  .menu-topbar {
+    padding: 18px 48px;
+  }
+
+  .menu-categories-wrap {
+    padding: 10px 48px 14px;
+  }
+
+  .menu-filter-strip {
+    padding: 10px 48px 16px;
+  }
+
+  .detail-hero {
+    height: 520px;
+  }
+
+  .table-grid {
+    max-width: 600px;
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 
 /* === Floating Cart Button === */
 .floating-cart {
