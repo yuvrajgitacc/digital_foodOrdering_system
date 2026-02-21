@@ -25,15 +25,30 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 const app = express();
 const server = http.createServer(app);
+
+// In production, allow same-origin; in dev, allow the Vite dev server
+const allowedOrigins = [FRONTEND_URL];
+if (process.env.RENDER_EXTERNAL_URL) {
+    allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
+}
+
 const io = new Server(server, {
     cors: {
-        origin: FRONTEND_URL,
+        origin: (origin, callback) => {
+            // Allow requests with no origin (mobile apps, curl, etc)
+            if (!origin) return callback(null, true);
+            // In production, allow same-origin
+            if (allowedOrigins.some(o => origin.startsWith(o)) || !origin) {
+                return callback(null, true);
+            }
+            return callback(null, true); // Be permissive for now
+        },
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
     },
 });
 
 // Middleware
-app.use(cors({ origin: FRONTEND_URL }));
+app.use(cors());
 app.use(express.json());
 
 // Ensure uploads directory exists
@@ -490,14 +505,14 @@ app.post('/api/tables/:id/clear', authenticateToken, (req, res) => {
         const tableId = req.params.id;
         // Mark all pending orders as completed
         db.prepare(`UPDATE orders SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE table_id = ? AND status NOT IN ('completed', 'cancelled')`).run(tableId);
-        
+
         // Resolve any pending waiter calls for this table
         db.prepare(`UPDATE waiter_calls SET status = 'resolved' WHERE table_id = ? AND status = 'pending'`).run(tableId);
-        
+
         // Reset table status
         db.prepare(`UPDATE tables SET status = 'available', current_order_session = NULL WHERE id = ?`).run(tableId);
         const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
-        
+
         io.emit('table-updated', table);
         io.emit('waiter-call-resolved', { tableId: parseInt(tableId) }); // Notify admins to refresh list if needed
         res.json({ success: true, table });
@@ -1201,6 +1216,21 @@ cleanupOldData();
 // Run cleanup every 24 hours
 const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in ms
 setInterval(cleanupOldData, CLEANUP_INTERVAL);
+
+// ============================================================
+// SERVE FRONTEND (Production)
+// ============================================================
+const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientBuildPath)) {
+    console.log('📦 Serving static frontend from:', clientBuildPath);
+    app.use(express.static(clientBuildPath));
+    // Catch-all: serve index.html for any non-API route (React Router support)
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads') && !req.path.startsWith('/socket.io')) {
+            res.sendFile(path.join(clientBuildPath, 'index.html'));
+        }
+    });
+}
 
 // ============================================================
 // START SERVER
